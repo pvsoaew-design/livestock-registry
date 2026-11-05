@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// BLRS — Firestore security rules.
+// Paste this into: Firebase console → Firestore Database → Rules → Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // The registry must always keep its basic shape (stops junk / wiped uploads).
+    function looksLikeRegistry(d) {
+      return d.farmers is list
+          && d.batches is list
+          && d.salesHistory is list
+          && d.notifications is list
+          && d.messages is list;
+    }
+
+    // The one document the app uses.
+    match /registry/main {
+      allow read: if signedIn();
+      allow create: if signedIn() && looksLikeRegistry(request.resource.data);
+      // Blocks any single save that removes more than 50 farmer records at once.
+      // (If you ever need to restore an old backup with far fewer farmers,
+      //  change 50 to a bigger number, publish, restore, then change it back.)
+      allow update: if signedIn()
+                    && looksLikeRegistry(request.resource.data)
+                    && request.resource.data.farmers.size() >= resource.data.farmers.size() - 50;
+      // The registry document can never be deleted from the app.
+      allow delete: if false;
+    }
+
+    // Everything else in the database is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
