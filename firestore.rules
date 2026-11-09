@@ -1,7 +1,8 @@
 rules_version = '2';
 
-// BLRS — Firestore security rules.
+// BLRS — Firestore security rules (version 2: one document per barangay).
 // Paste this into: Firebase console → Firestore Database → Rules → Publish.
+// Publish these rules BEFORE uploading the new index.html.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -9,27 +10,36 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // The registry must always keep its basic shape (stops junk / wiped uploads).
-    function looksLikeRegistry(d) {
-      return d.farmers is list
-          && d.batches is list
-          && d.salesHistory is list
-          && d.notifications is list
-          && d.messages is list;
-    }
-
-    // The one document the app uses.
+    // Main document: accounts, agents, announcements, municipal notices.
     match /registry/main {
       allow read: if signedIn();
-      allow create: if signedIn() && looksLikeRegistry(request.resource.data);
-      // Blocks any single save that removes more than 50 farmer records at once.
-      // (If you ever need to restore an old backup with far fewer farmers,
-      //  change 50 to a bigger number, publish, restore, then change it back.)
+      allow create: if signedIn() && request.resource.data.barangays is list;
+      // After the move to per-barangay documents (schema 2), nothing may put a farmer list back here:
+      // only an outdated, un-refreshed app version would try, and it is refused.
       allow update: if signedIn()
-                    && looksLikeRegistry(request.resource.data)
-                    && request.resource.data.farmers.size() >= resource.data.farmers.size() - 50;
-      // The registry document can never be deleted from the app.
+                    && request.resource.data.barangays is list
+                    && (resource.data.get('schema', 0) != 2 || !('farmers' in request.resource.data))
+                    && (!('farmers' in request.resource.data) || !('farmers' in resource.data)
+                        || request.resource.data.farmers.size() >= resource.data.farmers.size() - 50);
       allow delete: if false;
+
+      // One document per barangay: its farmers, animals, sales, messages and notifications.
+      match /shards/{shardId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+                      && request.resource.data.get('schema', 0) == 2
+                      && request.resource.data.farmers is list
+                      && request.resource.data.batches is list
+                      && request.resource.data.salesHistory is list;
+        // Blocks any single save that removes more than 50 farmer records from a barangay at once.
+        allow update: if signedIn()
+                      && request.resource.data.get('schema', 0) == 2
+                      && request.resource.data.farmers is list
+                      && request.resource.data.batches is list
+                      && request.resource.data.salesHistory is list
+                      && request.resource.data.farmers.size() >= resource.data.farmers.size() - 50;
+        allow delete: if false;
+      }
     }
 
     // Everything else in the database is closed.

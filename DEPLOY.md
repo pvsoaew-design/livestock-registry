@@ -1,78 +1,92 @@
-# BLRS — Step-by-Step Deployment Guide
+# BLRS — Update & Rollout Guide (version 2026.11.09: "one storage space per barangay")
 
-You will upload **3 files** to GitHub, paste **security rules** into Firebase, then refresh every device.
-Takes about 15 minutes. No coding needed.
+This update fixes **"Cloud copy too large — clear old notifications/sales"**, records not saving, and the
+notification "jam" when many devices are used at once. It gives **each barangay its own cloud storage space**
+and moves the registry on each device into the browser's larger database.
+
+**Do the steps in this exact order.** About 30 minutes. No coding needed.
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole app (new photo, new header, security fixes) |
-| `vercel.json` | Security settings for the website (blocks fake copies of your site inside other pages) |
-| `firestore.rules` | Security rules for the database (you copy-paste its text into Firebase — Part B) |
+| `index.html` | The app |
+| `firestore.rules` | New database rules (you copy-paste its text into Firebase — Step 2) |
+| `vercel.json` | Website security settings (same as before) |
 
 ---
 
-## Part A — Upload the files to GitHub (website update)
+## Step 1 — Back up (2 minutes)
 
-1. **Make a backup first.** Open BLRS → log in as **Livestock Focal Officer** → **💾 Backup & Sync** → **⬇️ Download Full Backup**.
-2. Download the 3 files from the Claude chat (click each card → **Download**). They go to your **Downloads** folder.
-3. Go to **github.com/pvsoaew-design/livestock-registry** (make sure it says branch **main**).
-4. Click **Add file → Upload files**.
-5. Drag **index.html**, **vercel.json** and **firestore.rules** onto the page (all three together).
-6. Scroll down → click the green **Commit changes** button.
-7. Wait **1–2 minutes**. Vercel publishes the new version automatically.
-   (Optional check: vercel.com → project **livestock-registry** → **Deployments** → newest one says **Ready**.)
+1. Open BLRS → log in as **Livestock Focal Officer** → **💾 Backup & Sync** → **⬇️ Download Full Backup**.
+2. Keep the file somewhere safe (e.g. Google Drive). This is your safety net.
 
-## Part B — Lock the database (Firebase rules) — very important
+## Step 2 — Put in the new database rules FIRST (5 minutes)
 
-1. Go to **console.firebase.google.com** and sign in with the Google account that owns the project.
-2. Click the project **hinunangan-livestock-registry**.
-3. Left menu: **Build → Firestore Database** → click the **Rules** tab at the top.
-4. Open **firestore.rules** on your computer with Notepad (right-click → Open with → Notepad), press **Ctrl+A**, then **Ctrl+C**.
-5. In Firebase, click inside the rules box, press **Ctrl+A** (select all) and **Ctrl+V** (paste) to replace the old rules.
-6. Click **Publish**.
+The new app saves each barangay separately; the old rules would refuse that, so the rules go in first.
+(The new rules still accept the old app, so nothing breaks while you do Step 3.)
 
-What these rules do: only the app can read/write; nobody can delete the registry; a single save cannot wipe out more than 50 farmers; everything else in the database is closed.
+1. **console.firebase.google.com** → project **hinunangan-livestock-registry**.
+2. Left menu **Build → Firestore Database** → **Rules** tab.
+3. Open `firestore.rules` with Notepad → **Ctrl+A**, **Ctrl+C** → in Firebase click in the rules box → **Ctrl+A**, **Ctrl+V** → **Publish**.
 
-## Part C — Restrict the Firebase key to your website (recommended, 5 minutes)
+## Step 3 — Upload the new app (5 minutes)
 
-1. Go to **console.cloud.google.com** → choose project **hinunangan-livestock-registry** (top bar).
-2. Menu ☰ → **APIs & Services → Credentials**.
-3. Under **API Keys**, click the key named like **Browser key (auto created by Firebase)**.
-4. Under **Application restrictions** choose **Websites**, then **Add** these two lines:
-   - your website address, e.g. `https://livestock-registry.vercel.app/*` (use your real address)
-   - `https://hinunangan-livestock-registry.firebaseapp.com/*`
-5. Click **Save**. (Takes up to 5 minutes to apply.)
+1. **github.com/pvsoaew-design/livestock-registry** (branch **main**) → **Add file → Upload files**.
+2. Drag in **index.html**, **firestore.rules** and **vercel.json** → **Commit changes**.
+3. Wait 1–2 minutes (vercel.com → **livestock-registry** → **Deployments** → newest says **Ready**).
 
-## Part D — Refresh every device (important)
+## Step 4 — The Focal Officer opens it first (5 minutes)
 
-- **Computer:** open BLRS and press **Ctrl + F5**.
-- **Phone:** close the browser tab completely and open BLRS again.
+1. On **your** computer: open BLRS → press **Ctrl + F5** → log in as **Livestock Focal Officer**.
+2. Leave it open for **1–2 minutes**. In the background the app moves the registry into one storage space
+   per barangay. The badge at the bottom-right shows **Saving…** then **☁️ Synced**.
+3. Check: **💾 Backup & Sync → 📦 Storage** lists the barangays, each far below 100%.
 
-Do this on **every** device, so no one keeps using the old version.
+## Step 5 — Refresh EVERY device (the important part)
 
-## Part E — Check that it works
+Every computer and phone must load the new version — old open tabs can no longer save.
 
-1. Log in as a **Barangay Secretary** with your usual PIN → it still works (old PINs are kept, now stored scrambled).
-2. Log in as **Focal** → if you see a reminder about a security question, go to **🔑 Account Management → Change My Access Code** and set one.
-3. **💾 Backup & Sync** → you should see **🗓️ Automatic Daily Snapshots**.
-4. Bottom-right badge should say **☁️ Synced**.
+- **Computers:** open BLRS and press **Ctrl + F5**.
+- **Phones:** close the BLRS tab completely, then open the link again.
+
+Tell all 40 Barangay Secretaries, the 20 staff and the Mayor's office (a text message works):
+> "BLRS was updated. Please close the BLRS tab and open it again. If the bottom-right badge says
+> 'Not synced', close and reopen once more."
+
+A device that was **not** refreshed shows **☁️ Not synced** and its saves are refused (this protects the data).
+Nothing typed on it is lost: as soon as it is refreshed, its unsaved work uploads automatically.
+Future updates will show a **🔄 new version available** message by themselves.
+
+## Step 6 — Check (2 minutes)
+
+- A Barangay Secretary adds a test farmer → on the Focal computer the 🔔 bell shows it within seconds.
+- Bottom-right badge says **☁️ Synced** on both.
+
+---
+
+## Keeping storage healthy (once a month, 2 minutes)
+
+**💾 Backup & Sync → 📦 Storage** shows how full each barangay's space is (each barangay has **1 MB**,
+about **2,000 farmer/animal/sales records**). Green = fine, yellow = getting full, red = act now.
+
+- Old notifications are removed **automatically** (read ones after 45 days; at most 120 per barangay).
+- If a barangay turns yellow/red: **⬇️ Download Full Backup**, then **🧹 Clean up storage**
+  (remove read/old notifications, old chat messages, or sales history before a chosen year).
+
+## Firebase usage (once a month)
+
+Firebase console → **Firestore Database → Usage**. The free plan allows 50,000 reads and 20,000 writes per
+day and 10 GB of downloads per month. With this version, 60 devices doing a normal day's work use only a small
+part of that (tested: about 30× less downloading than the previous version). Devices that are logged out —
+including after 15 minutes of no activity — download almost nothing.
+If you ever approach the limit, Firebase **Upgrade → Blaze** (pay-as-you-go, set a budget alert of e.g. ₱100)
+prevents the app from stopping; at this size the cost is normally ₱0–₱100 per month.
 
 ## If something goes wrong
 
-- **Undo the website update:** vercel.com → **livestock-registry** → **Deployments** → the previous one → **⋯ → Promote to Production**. Your data is in Firebase, so nothing is lost.
-- **"Not synced" right after Part B:** check the rules were pasted completely and **Published**.
-- **Focal forgot the access code (no security question set):** Firebase console → **Firestore Database → Data** → `registry` → `main` → hover the field **focalAccount** → click the 🗑️ delete icon. The next Focal login will ask to create a new code. No registry data is lost.
-- **Need to restore an old backup with far fewer farmers:** in the Firebase rules change `- 50` to `- 5000`, Publish, do the restore, then change it back and Publish.
-
-## What changed in this version (security)
-
-- PINs, the Focal access code and the security answer are stored **scrambled (hashed)** — they can no longer be read from the database or shown on screen.
-- **5 wrong PINs = temporary lock** (30 seconds, growing up to 15 minutes).
-- **Auto log-out after 15 minutes** of no activity (warning 1 minute before).
-- If a PIN is **reset or changed**, devices still logged in with the old one are **logged out**.
-- Easy PINs like 1111 / 1234 are refused for **new** accounts; new Focal codes need 6+ characters.
-- The old "type RESET" option that let anyone reset the Focal code is **removed**.
-- Data from the cloud or a backup file is **checked and cleaned** so it cannot inject harmful code.
-- The page **cannot be embedded** in another website (prevents look-alike / click-trick attacks), and only trusted script sources are allowed.
-- **Automatic daily snapshots** (last 7 days) on each device, with one-click **Merge** to recover lost records.
-- Secretaries/agents cannot remove more than 5 farmer records in one save; the database rules block mass deletions too.
+- **Undo the website update:** vercel.com → **livestock-registry** → **Deployments** → previous → **⋯ → Promote to Production**.
+  Then in Firebase Rules, paste back the previous rules. Your data is safe in Firebase.
+- **A device keeps saying "Not synced"** → it is on an old version: close the tab fully and reopen (phones), Ctrl+F5 (computers).
+- **"Brgy. X: storage full"** → Focal: Download Full Backup → 📦 Storage → 🧹 Clean up storage.
+- **"Not allowed by the database rules"** → Step 2 was not published; repeat it.
+- **Focal forgot the access code (no security question set):** Firebase → Firestore → **Data** → `registry` → `main` → delete the field **focalAccount**.
+- **Restoring an old backup that has many fewer farmers in a barangay** → in the rules change `- 50` to `- 5000`, Publish, restore, then change it back and Publish.
